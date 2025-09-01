@@ -1,19 +1,19 @@
+from django.http import HttpResponseForbidden
+from .models import RequestLog, BlockedIP
 import datetime
-from .models import RequestLog
 
 class IPLoggingMiddleware:
-    """
-    Middleware that logs the IP address, timestamp, and path of each incoming request.
-    """
-
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # Get client IP
         ip_address = self.get_client_ip(request)
 
-        # Log to DB
+        # Block blacklisted IPs
+        if BlockedIP.objects.filter(ip_address=ip_address).exists():
+            return HttpResponseForbidden("Your IP is blacklisted.")
+
+        # Log request
         RequestLog.objects.create(
             ip_address=ip_address,
             timestamp=datetime.datetime.now(),
@@ -24,7 +24,6 @@ class IPLoggingMiddleware:
         return response
 
     def get_client_ip(self, request):
-        """Extract client IP address considering proxy headers."""
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
             ip = x_forwarded_for.split(",")[0]
