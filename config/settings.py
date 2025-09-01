@@ -41,6 +41,14 @@ INSTALLED_APPS = [
     'ip_tracking'
 ]
 
+CELERY_BEAT_SCHEDULE = {
+    "detect_suspicious_ips_hourly": {
+        "task": "ip_tracking.tasks.detect_suspicious_ips",
+        "schedule": 3600.0,  # every hour
+    },
+}
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
